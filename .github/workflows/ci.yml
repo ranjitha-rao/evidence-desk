@@ -1,0 +1,24 @@
+name: CI
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm audit --audit-level=high --omit=dev
+      - name: Manifest has no egress permissions (Runs on Atlassian)
+        run: |
+          if grep -nE '^\s*external:' manifest.yml; then echo "manifest.yml declares external egress"; exit 1; fi
+      - name: No asApp() reads in src/data (SR-3)
+        run: |
+          if grep -rn 'asApp()' src/data; then echo "Use asUser() for product reads"; exit 1; fi
+      - run: npm test

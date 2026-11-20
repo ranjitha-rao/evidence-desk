@@ -1,0 +1,21 @@
+{
+  "name": "evidence-desk",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Rovo agent that checks SOC 2 / ISO 27001 controls against Jira, JSM and Confluence records and drafts a cited evidence pack.",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "test": "vitest run",
+    "test:attacks": "vitest run test/injection.test.js --reporter=verbose",
+    "lint": "forge lint"
+  },
+  "dependencies": {
+    "@forge/api": "8.5.0",
+    "@forge/sql": "4.0.10",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "vitest": "5.1.1"
+  }
+}
