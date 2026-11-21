@@ -22,10 +22,22 @@ export function fromJiraIssue(issue, { reviewerFieldId, source = 'jira' } = {}) 
   };
 }
 
-export function withSla(record, slaValues) {
+export function withSla(record, slaValues, issue) {
   const ttfr = (slaValues ?? []).find((s) => /first response/i.test(s.name ?? ''));
   const cycle = ttfr?.completedCycles?.[0];
-  return { ...record, firstResponseMinutes: cycle ? Math.round(cycle.elapsedTime.millis / 60000) : null };
+  if (cycle) return { ...record, firstResponseMinutes: Math.round(cycle.elapsedTime.millis / 60000), firstResponseSource: 'sla' };
+  // No SLA cycle (for example, issues imported with past dates): use the first reply from someone other than the reporter.
+  const reporter = issue?.fields?.reporter?.accountId;
+  const first = (issue?.fields?.comment?.comments ?? [])
+    .filter((c) => c.author?.accountId && c.author.accountId !== reporter)
+    .map((c) => Date.parse(c.created))
+    .sort((a, b) => a - b)[0];
+  const created = Date.parse(issue?.fields?.created ?? record.createdAt);
+  return {
+    ...record,
+    firstResponseMinutes: first ? Math.round((first - created) / 60000) : null,
+    firstResponseSource: first ? 'first-comment' : null,
+  };
 }
 
 export function withApproval(record, approvals) {

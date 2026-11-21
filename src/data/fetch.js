@@ -51,13 +51,13 @@ export async function fetchEvidence({ projectKeys, serviceDeskProjectKey, policy
   if (serviceDeskProjectKey) {
     const jsmIssues = await searchJql(
       `project = ${serviceDeskProjectKey} AND issuetype in (Incident, Change) AND created >= "${since}" ORDER BY created ASC`,
-      JIRA_FIELDS,
+      [...JIRA_FIELDS, 'reporter', 'comment'],
     );
     for (const issue of jsmIssues) {
       let rec = fromJiraIssue(issue, { source: 'jsm' });
       if (rec.type === 'Incident') {
         const sla = await json(await api.asUser().requestJira(route`/rest/servicedeskapi/request/${issue.key}/sla`), 'SLA data');
-        rec = withSla(rec, sla.values);
+        rec = withSla(rec, sla.values, issue);
       } else if (rec.type === 'Change') {
         const ap = await json(await api.asUser().requestJira(route`/rest/servicedeskapi/request/${issue.key}/approval`), 'approvals');
         rec = withApproval(rec, ap.values);

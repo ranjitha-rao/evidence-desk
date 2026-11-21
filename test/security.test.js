@@ -91,3 +91,34 @@ describe('audit log', () => {
     expect(verifyChain(await store.listAudit())).toMatchObject({ ok: false, brokenAt: 3 });
   });
 });
+
+import { reviewedOn, CONTROLS } from '../src/controls/catalog.js';
+import { withSla } from '../src/data/normalize.js';
+
+describe('date sources', () => {
+  it('PL-1 uses a stated "Last reviewed" date over the last edit', () => {
+    const page = { id: 'CONF:1', source: 'confluence', labels: ['policy'], text: 'Owner: Security\nLast reviewed: 2025-01-10', updatedAt: '2026-10-01T00:00:00Z' };
+    expect(reviewedOn(page)).toBe('2025-01-10T00:00:00Z');
+    const pl1 = CONTROLS.find((c) => c.id === 'PL-1').check([page], { start: '2026-08-01', end: '2026-10-31' });
+    expect(pl1.status).toBe('fail');
+    expect(pl1.exceptions[0].reason).toBe('Last reviewed 2025-01-10');
+  });
+  it('IR-1 falls back to the first reply from someone other than the reporter', () => {
+    const issue = {
+      fields: {
+        created: '2026-09-01T10:00:00Z',
+        reporter: { accountId: 'cust' },
+        comment: { comments: [
+          { author: { accountId: 'cust' }, created: '2026-09-01T10:05:00Z' },
+          { author: { accountId: 'agent' }, created: '2026-09-01T10:47:00Z' },
+        ] },
+      },
+    };
+    const r = withSla({ createdAt: issue.fields.created }, [], issue);
+    expect(r).toMatchObject({ firstResponseMinutes: 47, firstResponseSource: 'first-comment' });
+  });
+  it('IR-1 prefers SLA data when present', () => {
+    const r = withSla({}, [{ name: 'Time to first response', completedCycles: [{ elapsedTime: { millis: 12 * 60000 } }] }], {});
+    expect(r).toMatchObject({ firstResponseMinutes: 12, firstResponseSource: 'sla' });
+  });
+});

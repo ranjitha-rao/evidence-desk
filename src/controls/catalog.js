@@ -146,8 +146,8 @@ export const CONTROLS = [
     check(records, period) {
       const policies = records.filter((r) => r.source === 'confluence' && r.labels?.includes('policy'));
       const exceptions = policies
-        .filter((r) => daysBetween(r.updatedAt, period.end) > 365)
-        .map((r) => ({ recordId: r.id, reason: `Last updated ${r.updatedAt.slice(0, 10)}` }));
+        .filter((r) => daysBetween(reviewedOn(r), period.end) > 365)
+        .map((r) => ({ recordId: r.id, reason: `Last reviewed ${reviewedOn(r).slice(0, 10)}` }));
       return result(this, {
         evidence: policies.map((r) => r.id),
         exceptions,
@@ -187,6 +187,14 @@ export const CONTROLS = [
     },
   },
 ];
+
+// Policies usually state their review date; trust that over the page's last-edit time,
+// since a typo fix is not a review. Falls back to the last edit when no date is stated.
+const REVIEWED_RE = /last reviewed\s*[:\-]?\s*(\d{4}-\d{2}-\d{2})/i;
+export function reviewedOn(r) {
+  const m = REVIEWED_RE.exec(r.text ?? '');
+  return m ? `${m[1]}T00:00:00Z` : r.updatedAt;
+}
 
 export function quarterOf(iso) {
   const d = new Date(iso);

@@ -109,7 +109,7 @@ modules:
 app:
   id: ari:cloud:ecosystem::app/00000000-0000-0000-0000-000000000000
   runtime:
-    name: nodejs22.x
+    name: nodejs24.x
 
 # Least privilege: read-only everywhere except one Confluence write, used only to create draft pages.
 # No `external` permissions, so the app makes no calls outside Atlassian (Runs on Atlassian).
