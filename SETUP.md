@@ -1,6 +1,15 @@
-# Deploy Evidence Desk to the developer site
+# Deploy Evidence Desk
 
-Site: https://evidence-desk.atlassian.net. Run these on your machine, in order, and paste the output of any step that fails.
+Rovo is not on free developer sites, so develop and demo on a **Forge demo site**. It comes with enterprise editions of Jira, Confluence, JSM and Rovo, and lasts 90 days. Judges test on the same kind of site. ([docs](https://developer.atlassian.com/platform/forge/provision-a-demo-development-site/))
+
+```sh
+npm install -g @forge/cli@latest
+forge site provision          # one demo site per developer; if none are available, retry later
+forge deploy -e development
+forge install --demo-site -e development
+```
+
+The steps below are for the free site, https://evidence-desk.atlassian.net, which has no Rovo. Run them on your machine, in order, and paste the output of any step that fails.
 
 ## 1. Use Node 24
 
